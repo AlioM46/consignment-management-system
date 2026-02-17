@@ -5,38 +5,41 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Product\StoreProductRequest;
 use App\Http\Requests\Product\UpdateProductRequest;
 use App\Services\Product\ProductService;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ProductController extends Controller
 {
-    public function index(ProductService $service): JsonResponse
+    public function index(ProductService $service): Response
     {
-        return response()->json($service->index());
+        return Inertia::render('Products/Index', [
+            'products' => $service->index(),
+        ]);
     }
 
-    public function store(StoreProductRequest $request, ProductService $service): JsonResponse
+    public function store(StoreProductRequest $request, ProductService $service): RedirectResponse
     {
-        $item = $service->store($request->validated());
-
-        return response()->json($item, 201);
+        $service->store($request->validated());
+        return redirect()->route('products.index');
     }
 
-    public function show(int $id, ProductService $service): JsonResponse
+    public function show(int $id, ProductService $service): Response
     {
-        return response()->json($service->show($id));
+        return Inertia::render('Products/Show', [
+            'product' => $service->show($id),
+        ]);
     }
 
-    public function update(UpdateProductRequest $request, int $id, ProductService $service): JsonResponse
+    public function update(UpdateProductRequest $request, int $id, ProductService $service): RedirectResponse
     {
-        $item = $service->update($id, $request->validated());
-
-        return response()->json($item);
+        $service->update($id, $request->validated());
+        return redirect()->route('products.show', $id);
     }
 
-    public function destroy(int $id, ProductService $service): JsonResponse
+    public function destroy(int $id, ProductService $service): RedirectResponse
     {
         $service->destroy($id);
-
-        return response()->json(null, 204);
+        return redirect()->route('products.index');
     }
 }

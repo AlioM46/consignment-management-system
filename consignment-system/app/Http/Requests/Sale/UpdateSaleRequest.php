@@ -16,8 +16,10 @@ class UpdateSaleRequest extends FormRequest
         return [
             'vehicle_id' => ['sometimes', 'required', 'integer', 'exists:vehicles,id'],
             'sale_date' => ['sometimes', 'required', 'date'],
-            'total_amount' => ['sometimes', 'required', 'numeric', 'min:0'],
             'payment_method' => ['sometimes', 'required', 'string', 'max:50'],
+            'products' => ['sometimes', 'required', 'array', 'min:1'],
+            'products.*.product_id' => ['required_with:products', 'integer', 'exists:products,id'],
+            'products.*.quantity' => ['required_with:products', 'integer', 'min:1'],
         ];
     }
 
@@ -27,8 +29,13 @@ class UpdateSaleRequest extends FormRequest
             'vehicle_id.required' => 'Vehicle is required.',
             'vehicle_id.exists' => 'Vehicle not found.',
             'sale_date.required' => 'Sale date is required.',
-            'total_amount.required' => 'Total amount is required.',
             'payment_method.required' => 'Payment method is required.',
+            'products.required' => 'At least one product is required.',
+            'products.min' => 'At least one product is required.',
+            'products.*.product_id.required' => 'Product is required.',
+            'products.*.product_id.exists' => 'Product not found.',
+            'products.*.quantity.required' => 'Quantity is required.',
+            'products.*.quantity.min' => 'Quantity must be at least 1.',
         ];
     }
 }

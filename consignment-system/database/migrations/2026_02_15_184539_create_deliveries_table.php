@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string("name");
             $table->date("delivery_date");
             $table->unsignedTinyInteger('status')->default(1);
-            $table->integer("total_items");
-            $table->decimal("total_value", 18, 2);
+            $table->integer("total_items")->default(0);
+            $table->decimal("total_value", 18, 2)->default(0);
             $table->foreignId('vehicle_id')->constrained('vehicles');
 
             $table->timestamps();

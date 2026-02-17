@@ -2,8 +2,8 @@
 
 namespace App\Services\DeliveryItem\Actions;
 
-use App\Models\Delivery;
 use App\Models\DeliveryItems;
+use App\Services\Totals\ItemTotalsCalculator;
 
 class CreateDeliveryItem
 {
@@ -11,23 +11,8 @@ class CreateDeliveryItem
     {
         $item = DeliveryItems::create($data);
 
-        $this->recalculateDeliveryTotals($item->delivery_id);
+        ItemTotalsCalculator::recalculateDelivery($item->delivery_id);
 
         return $item;
-    }
-
-    private function recalculateDeliveryTotals(int $deliveryId): void
-    {
-        $totals = DeliveryItems::query()
-            ->where('delivery_id', $deliveryId)
-            ->selectRaw('COALESCE(SUM(quantity), 0) AS total_items, COALESCE(SUM(quantity * price), 0) AS total_value')
-            ->first();
-
-        Delivery::query()
-            ->whereKey($deliveryId)
-            ->update([
-                'total_items' => (int) ($totals->total_items ?? 0),
-                'total_value' => $totals->total_value ?? 0,
-            ]);
     }
 }

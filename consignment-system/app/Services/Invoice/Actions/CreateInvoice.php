@@ -2,34 +2,59 @@
 
 namespace App\Services\Invoice\Actions;
 
+use App\Enums\enInvoiceStatus;
+use App\Models\Delivery;
 use App\Models\Invoice;
 use App\Models\Sale;
 use App\Models\Vehicle;
+use Illuminate\Support\Facades\DB;
 
 class CreateInvoice
 {
     public function handle(array $data): Invoice
     {
-        $totalSales = (float) Sale::query()
-            ->where('vehicle_id', $data['vehicle_id'])
-            ->whereBetween('sale_date', [$data['start_date'], $data['end_date']])
-            ->sum('total_amount');
+        return DB::transaction(function () use ($data) {
+            $vehicleId = $data['vehicle_id'];
+            $startDate = $data['start_date'];
+            $endDate = $data['end_date'];
+            $commissionRate = $data['commission_rate'];
+            $expenses = $data['expenses'];
 
-        $commissionRate = (float) $data['commission_rate'];
-        $commissionAmount = $totalSales * ($commissionRate / 100);
-        $expenses = isset($data['expenses']) ? (float) $data['expenses'] : 0.0;
-        $netAmount = $totalSales - $commissionAmount - $expenses;
+            $vehicle = Vehicle::findOrFail($vehicleId);
 
-        $data['total_sales'] = round($totalSales, 2);
-        $data['commission_amount'] = round($commissionAmount, 2);
-        $data['net_amount'] = round($netAmount, 2);
-        $data['invoice_date'] = now()->toDateString();  
-        $data['status'] = 1; // Default to 'pending'    
-        
-        $data['vendor_id'] = Vehicle::query()
-            ->whereKey($data['vehicle_id'])
-            ->value('vendor_id') ?? $data['vendor_id'] ?? null;
+            // Calculate Total Sales
+            $totalSales = Sale::where('vehicle_id', $vehicleId)
+                ->whereBetween('sale_date', [$startDate, $endDate])
+                ->sum('total_amount');
 
-        return Invoice::create($data);
+            // Calculate Total Deliveries
+            $totalDeliveries = Delivery::where('vehicle_id', $vehicleId)
+                ->whereBetween('delivery_date', [$startDate, $endDate])
+                ->sum('total_value'); // Use total_value, assuming it's available on Delivery model
+
+            // Calculate Commission
+            $commissionAmount = $totalSales * ($commissionRate / 100);
+
+            // Calculate Net Amount
+            // Formula: (Sales - Commission) - (Deliveries + Expenses)
+            // Or typically: Sales - Commission - Deliveries - Expenses
+            $netAmount = $totalSales - $commissionAmount - $expenses;
+
+            $invoiceData = [
+                'vehicle_id' => $vehicleId,
+                'vendor_id' => $vehicle->vendor_id,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'commission_rate' => $commissionRate,
+                'expenses' => $expenses,
+                'total_sales' => $totalSales,
+                'commission_amount' => $commissionAmount,
+                'net_amount' => $netAmount,
+                'status' => enInvoiceStatus::Pending->value,
+                'invoice_date' => now(),
+            ];
+
+            return Invoice::create($invoiceData);
+        });
     }
 }

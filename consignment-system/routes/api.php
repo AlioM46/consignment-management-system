@@ -12,7 +12,7 @@ use App\Http\Controllers\SaleItemController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VendorController;
 
-Route::get('/ping', fn () => response()->json(['pong' => true]));
+Route::get('/ping', fn() => response()->json(['pong' => true]));
 
 // --------------------
 // Auth (PUBLIC)

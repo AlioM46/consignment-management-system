@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('vehicle_id')->constrained('vehicles');
             $table->date('sale_date');
-            $table->decimal('total_amount', 18, 2);
+            $table->decimal('total_amount', 18, 2)->default(0);
             $table->string('payment_method');
             // $table->enum('status', ['completed', 'cancelled'])->default('completed');
 

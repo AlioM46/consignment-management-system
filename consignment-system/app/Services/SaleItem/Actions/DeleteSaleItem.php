@@ -2,8 +2,8 @@
 
 namespace App\Services\SaleItem\Actions;
 
-use App\Models\Sale;
 use App\Models\SaleItems;
+use App\Services\Totals\ItemTotalsCalculator;
 
 class DeleteSaleItem
 {
@@ -15,21 +15,9 @@ class DeleteSaleItem
         $deleted = $item->delete();
 
         if ($deleted) {
-            $this->recalculateSaleTotal($saleId);
+            ItemTotalsCalculator::recalculateSale($saleId);
         }
 
         return $deleted;
-    }
-
-    private function recalculateSaleTotal(int $saleId): void
-    {
-        $total = SaleItems::query()
-            ->where('sale_id', $saleId)
-            ->selectRaw('COALESCE(SUM(quantity * price), 0) AS total')
-            ->value('total');
-
-        Sale::query()
-            ->whereKey($saleId)
-            ->update(['total_amount' => $total]);
     }
 }

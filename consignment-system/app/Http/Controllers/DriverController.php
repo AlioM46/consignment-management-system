@@ -5,38 +5,41 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Driver\StoreDriverRequest;
 use App\Http\Requests\Driver\UpdateDriverRequest;
 use App\Services\Driver\DriverService;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class DriverController extends Controller
 {
-    public function index(DriverService $service): JsonResponse
+    public function index(DriverService $service): Response
     {
-        return response()->json($service->index());
+        return Inertia::render('Drivers/Index', [
+            'drivers' => $service->index(),
+        ]);
     }
 
-    public function store(StoreDriverRequest $request, DriverService $service): JsonResponse
+    public function store(StoreDriverRequest $request, DriverService $service): RedirectResponse
     {
-        $item = $service->store($request->validated());
-
-        return response()->json($item, 201);
+        $service->store($request->validated());
+        return redirect()->route('drivers.index');
     }
 
-    public function show(int $id, DriverService $service): JsonResponse
+    public function show(int $id, DriverService $service): Response
     {
-        return response()->json($service->show($id));
+        return Inertia::render('Drivers/Show', [
+            'driver' => $service->show($id),
+        ]);
     }
 
-    public function update(UpdateDriverRequest $request, int $id, DriverService $service): JsonResponse
+    public function update(UpdateDriverRequest $request, int $id, DriverService $service): RedirectResponse
     {
-        $item = $service->update($id, $request->validated());
-
-        return response()->json($item);
+        $service->update($id, $request->validated());
+        return redirect()->route('drivers.show', $id);
     }
 
-    public function destroy(int $id, DriverService $service): JsonResponse
+    public function destroy(int $id, DriverService $service): RedirectResponse
     {
         $service->destroy($id);
-
-        return response()->json(null, 204);
+        return redirect()->route('drivers.index');
     }
 }

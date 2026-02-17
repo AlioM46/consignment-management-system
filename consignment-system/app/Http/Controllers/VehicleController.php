@@ -4,39 +4,48 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Vehicle\StoreVehicleRequest;
 use App\Http\Requests\Vehicle\UpdateVehicleRequest;
+use App\Models\Driver;
+use App\Models\Vendor;
 use App\Services\Vehicle\VehicleService;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class VehicleController extends Controller
 {
-    public function index(VehicleService $service): JsonResponse
+    public function index(VehicleService $service): Response
     {
-        return response()->json($service->index());
+        return Inertia::render('Vehicles/Index', [
+            'vehicles' => $service->index(),
+            'drivers' => Driver::all(['id', 'name']),
+            'vendors' => Vendor::all(['id', 'name']),
+        ]);
     }
 
-    public function store(StoreVehicleRequest $request, VehicleService $service): JsonResponse
+    public function store(StoreVehicleRequest $request, VehicleService $service): RedirectResponse
     {
-        $item = $service->store($request->validated());
-
-        return response()->json($item, 201);
+        $service->store($request->validated());
+        return redirect()->route('vehicles.index');
     }
 
-    public function show(int $id, VehicleService $service): JsonResponse
+    public function show(int $id, VehicleService $service): Response
     {
-        return response()->json($service->show($id));
+        return Inertia::render('Vehicles/Show', [
+            'vehicle' => $service->show($id),
+            'drivers' => Driver::all(['id', 'name']),
+            'vendors' => Vendor::all(['id', 'name']),
+        ]);
     }
 
-    public function update(UpdateVehicleRequest $request, int $id, VehicleService $service): JsonResponse
+    public function update(UpdateVehicleRequest $request, int $id, VehicleService $service): RedirectResponse
     {
-        $item = $service->update($id, $request->validated());
-
-        return response()->json($item);
+        $service->update($id, $request->validated());
+        return redirect()->route('vehicles.show', $id);
     }
 
-    public function destroy(int $id, VehicleService $service): JsonResponse
+    public function destroy(int $id, VehicleService $service): RedirectResponse
     {
         $service->destroy($id);
-
-        return response()->json(null, 204);
+        return redirect()->route('vehicles.index');
     }
 }

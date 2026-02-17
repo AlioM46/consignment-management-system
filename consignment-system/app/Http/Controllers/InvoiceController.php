@@ -4,41 +4,48 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Invoice\StoreInvoiceRequest;
 use App\Http\Requests\Invoice\UpdateInvoiceRequest;
-use App\Services\Invoice\Actions\CreateInvoice;
+use App\Models\Vehicle;
+use App\Models\Vendor;
 use App\Services\Invoice\InvoiceService;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class InvoiceController extends Controller
 {
-    public function index(InvoiceService $service): JsonResponse
+    public function index(InvoiceService $service): Response
     {
-        return response()->json($service->index());
+        return Inertia::render('Invoices/Index', [
+            'invoices' => $service->index(),
+            'vehicles' => Vehicle::all(['id', 'plate_number']),
+            'vendors' => Vendor::all(['id', 'name']),
+        ]);
     }
 
-    public function createInvoicePerVehicle(StoreInvoiceRequest $request, InvoiceService $service): JsonResponse
+    public function createInvoicePerVehicle(StoreInvoiceRequest $request, InvoiceService $service): RedirectResponse
     {
-        $item = $service->store($request->validated());
-
-        return response()->json($item, 201);
+        $service->store($request->validated());
+        return redirect()->route('invoices.index');
     }
 
-    public function show(int $id, InvoiceService $service): JsonResponse
+    public function show(int $id, InvoiceService $service): Response
     {
-        return response()->json($service->show($id));
+        return Inertia::render('Invoices/Show', [
+            'invoice' => $service->show($id),
+            'vehicles' => Vehicle::all(['id', 'plate_number']),
+            'vendors' => Vendor::all(['id', 'name']),
+        ]);
     }
 
-    public function update(UpdateInvoiceRequest $request, int $id, InvoiceService $service): JsonResponse
+    public function update(UpdateInvoiceRequest $request, int $id, InvoiceService $service): RedirectResponse
     {
-        $item = $service->update($id, $request->validated());
-
-        return response()->json($item);
+        $service->update($id, $request->validated());
+        return redirect()->route('invoices.show', $id);
     }
 
-    public function destroy(int $id, InvoiceService $service): JsonResponse
+    public function destroy(int $id, InvoiceService $service): RedirectResponse
     {
         $service->destroy($id);
-
-        return response()->json(null, 204);
+        return redirect()->route('invoices.index');
     }
-
 }

@@ -4,39 +4,48 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\DeliveryItem\StoreDeliveryItemRequest;
 use App\Http\Requests\DeliveryItem\UpdateDeliveryItemRequest;
+use App\Models\Delivery;
+use App\Models\Product;
 use App\Services\DeliveryItem\DeliveryItemService;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class DeliveryItemController extends Controller
 {
-    public function index(DeliveryItemService $service): JsonResponse
+    public function index(DeliveryItemService $service): Response
     {
-        return response()->json($service->index());
+        return Inertia::render('DeliveryItems/Index', [
+            'deliveryItems' => $service->index(),
+            'deliveries' => Delivery::all(['id', 'name']),
+            'products' => Product::all(['id', 'name']),
+        ]);
     }
 
-    public function store(StoreDeliveryItemRequest $request, DeliveryItemService $service): JsonResponse
+    public function store(StoreDeliveryItemRequest $request, DeliveryItemService $service): RedirectResponse
     {
-        $item = $service->store($request->validated());
-
-        return response()->json($item, 201);
+        $service->store($request->validated());
+        return redirect()->route('delivery-items.index');
     }
 
-    public function show(int $id, DeliveryItemService $service): JsonResponse
+    public function show(int $id, DeliveryItemService $service): Response
     {
-        return response()->json($service->show($id));
+        return Inertia::render('DeliveryItems/Show', [
+            'deliveryItem' => $service->show($id),
+            'deliveries' => Delivery::all(['id', 'name']),
+            'products' => Product::all(['id', 'name']),
+        ]);
     }
 
-    public function update(UpdateDeliveryItemRequest $request, int $id, DeliveryItemService $service): JsonResponse
+    public function update(UpdateDeliveryItemRequest $request, int $id, DeliveryItemService $service): RedirectResponse
     {
-        $item = $service->update($id, $request->validated());
-
-        return response()->json($item);
+        $service->update($id, $request->validated());
+        return redirect()->route('delivery-items.show', $id);
     }
 
-    public function destroy(int $id, DeliveryItemService $service): JsonResponse
+    public function destroy(int $id, DeliveryItemService $service): RedirectResponse
     {
         $service->destroy($id);
-
-        return response()->json(null, 204);
+        return redirect()->route('delivery-items.index');
     }
 }

@@ -10,7 +10,7 @@ class UpdateDeliveryRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
-         if (! $this->has('status')) {
+        if (!$this->has('status')) {
             return;
         }
 
@@ -35,15 +35,16 @@ class UpdateDeliveryRequest extends FormRequest
 
     public function rules(): array
     {
-        $statuses = array_map(fn ($case) => $case->value, enDeliveryStatus::cases());
+        $statuses = array_map(fn($case) => $case->value, enDeliveryStatus::cases());
 
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'delivery_date' => ['sometimes', 'required', 'date'],
             'status' => ['sometimes', 'required', 'integer', Rule::in($statuses)],
-            'total_items' => ['sometimes', 'required', 'integer', 'min:0'],
-            'total_value' => ['sometimes', 'required', 'numeric', 'min:0'],
             'vehicle_id' => ['sometimes', 'required', 'integer', 'exists:vehicles,id'],
+            'products' => ['sometimes', 'required', 'array', 'min:1'],
+            'products.*.product_id' => ['required_with:products', 'integer', 'exists:products,id'],
+            'products.*.quantity' => ['required_with:products', 'integer', 'min:1'],
         ];
     }
 
@@ -55,10 +56,14 @@ class UpdateDeliveryRequest extends FormRequest
             'status.required' => 'Delivery status is required.',
             'status.integer' => 'Status must be an integer code: 1 (Arrived), 2 (Cancelled), 3 (Refunded).',
             'status.in' => 'Status must be one of: 1, 2, 3 (or legacy strings arrived, cancelled, refunded).',
-            'total_items.required' => 'Total items is required.',
-            'total_value.required' => 'Total value is required.',
             'vehicle_id.required' => 'Vehicle is required.',
             'vehicle_id.exists' => 'Vehicle not found.',
+            'products.required' => 'At least one product is required.',
+            'products.min' => 'At least one product is required.',
+            'products.*.product_id.required' => 'Product is required.',
+            'products.*.product_id.exists' => 'Product not found.',
+            'products.*.quantity.required' => 'Quantity is required.',
+            'products.*.quantity.min' => 'Quantity must be at least 1.',
         ];
     }
 }
