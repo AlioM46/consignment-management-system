@@ -16,11 +16,11 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
+            $table->string('refresh_token')->nullable();
+            $table->timestamp('refresh_token_expiration_at')->nullable();
+            $table->dateTime('last_login')->nullable();
             $table->timestamps();
         });
-
-
-
     }
 
     /**
@@ -29,6 +29,5 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('users');
-
     }
 };

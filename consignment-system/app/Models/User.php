@@ -7,11 +7,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class User extends Authenticatable
+
+class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use  HasFactory, Notifiable;
 
     public $timestamps = true;
     /**
@@ -23,6 +25,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'refresh_token',
+        'refresh_token_expiration_at',
+        'last_login',
+
     ];
 
     /**
@@ -32,6 +38,7 @@ class User extends Authenticatable
      */
     protected $hidden = [
         'password',
+        'last_login' => 'datetime',
     ];
 
     /**
@@ -43,6 +50,21 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'last_login' => 'datetime',
+
+        ];
+    }
+
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [
+            'email' => $this->email,
+            'name'  => $this->name,
         ];
     }
 }
